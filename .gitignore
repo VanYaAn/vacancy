@@ -1,0 +1,20 @@
+# Секреты
+.env
+credentials.json
+
+# Бинари
+bin/
+client/main
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.DS_Store
+
+# Claude
+.claude/

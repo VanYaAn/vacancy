@@ -1,0 +1,25 @@
+postgres:
+  url: "postgres://postgres:postgres@localhost:5432/mcpprep?sslmode=disable"
+
+hh:
+  token: ""              # Bearer-токен hh.ru (лучше задать через HH_TOKEN в .env)
+  rate_limit_ms: 300     # задержка между запросами (~3 req/sec)
+  default_per_page: 20   # вакансий на страницу (макс. 100)
+  max_pages: 5           # максимум страниц при поиске
+
+mcp:
+  python_bin: "python3"
+  resume_server: "server/resume_server.py"
+  sheets_server: "server/sheets_server.py"
+
+google:
+  credentials_file: "credentials.json"
+  sheet_id: "1Les_JyztM2cGBuuBUfGNr-gGhniuuZqxhK4BYrAZj0M"
+
+search:
+  text: "Go developer"
+  area: "1"              # 1 = Москва, 2 = СПб, 113 = вся Россия
+  experience: ""         # noExperience | between1And3 | between3And6 | moreThan6
+  work_format: ""        # REMOTE | ON_SITE | HYBRID
+  salary: 0              # нижняя граница зарплаты (0 = без фильтра)
+  only_with_salary: false
