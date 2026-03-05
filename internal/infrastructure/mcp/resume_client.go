@@ -17,13 +17,38 @@ import (
 type ResumeClient struct {
 	pythonBin  string
 	serverPath string
+	groqAPIKey string
 }
 
-func NewResumeClient(pythonBin, serverPath string) *ResumeClient {
+func NewResumeClient(pythonBin, serverPath, groqAPIKey string) *ResumeClient {
 	return &ResumeClient{
 		pythonBin:  pythonBin,
 		serverPath: serverPath,
+		groqAPIKey: groqAPIKey,
 	}
+}
+
+// GenerateRaw вызывает generate_resume и возвращает сырой JSON ответ от сервера.
+func (c *ResumeClient) GenerateRaw(ctx context.Context, data string) (string, error) {
+	session, close, err := c.connect(ctx)
+	if err != nil {
+		return "", fmt.Errorf("connect to resume server: %w", err)
+	}
+	defer close()
+
+	result, err := session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      "generate_resume",
+		Arguments: map[string]any{"data": data},
+	})
+	if err != nil {
+		return "", fmt.Errorf("call generate_resume: %w", err)
+	}
+
+	content, ok := result.Content[0].(*mcp.TextContent)
+	if !ok {
+		return "", fmt.Errorf("unexpected content type from resume server")
+	}
+	return content.Text, nil
 }
 
 func (c *ResumeClient) Generate(ctx context.Context, req domain.ResumeRequest) (domain.Resume, error) {
@@ -64,9 +89,9 @@ func (c *ResumeClient) connect(ctx context.Context) (*mcp.ClientSession, func(),
 		Version: "v1.0.0",
 	}, nil)
 
-	transport := &mcp.CommandTransport{
-		Command: exec.CommandContext(ctx, c.pythonBin, c.serverPath),
-	}
+	cmd := exec.CommandContext(ctx, c.pythonBin, c.serverPath)
+	cmd.Env = append(cmd.Environ(), "GROQ_API_KEY="+c.groqAPIKey)
+	transport := &mcp.CommandTransport{Command: cmd}
 
 	session, err := client.Connect(ctx, transport, nil)
 	if err != nil {

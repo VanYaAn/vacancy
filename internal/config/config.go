@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -32,6 +33,7 @@ type MCPConfig struct {
 	PythonBin    string `mapstructure:"python_bin"`
 	ResumeServer string `mapstructure:"resume_server"`
 	SheetsServer string `mapstructure:"sheets_server"`
+	GroqAPIKey   string `mapstructure:"groq_api_key"`
 }
 
 type SearchConfig struct {
@@ -49,6 +51,9 @@ type SearchConfig struct {
 // 3. .env файл
 // 4. переменные окружения
 func Load(cfgPath string) (*Config, error) {
+	// загружаем .env в os.Environ до инициализации Viper
+	_ = godotenv.Load(".env")
+
 	v := viper.New()
 
 	setDefaults(v)
@@ -59,13 +64,6 @@ func Load(cfgPath string) (*Config, error) {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, err
 		}
-	}
-
-	// .env файл
-	v.SetConfigType("dotenv")
-	v.SetConfigFile(".env")
-	if err := v.MergeInConfig(); err != nil {
-		// .env не обязателен, продолжаем
 	}
 
 	// переменные окружения (наивысший приоритет)
@@ -112,6 +110,7 @@ func bindEnvs(v *viper.Viper) {
 	v.BindEnv("mcp.python_bin", "PYTHON_BIN")
 	v.BindEnv("mcp.resume_server", "RESUME_SERVER")
 	v.BindEnv("mcp.sheets_server", "SHEETS_SERVER")
+	v.BindEnv("mcp.groq_api_key", "GROQ_API_KEY")
 
 	v.BindEnv("google.credentials_file", "GOOGLE_CREDENTIALS_FILE")
 	v.BindEnv("google.sheet_id", "GOOGLE_SHEET_ID")

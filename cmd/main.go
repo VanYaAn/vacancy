@@ -54,7 +54,7 @@ func main() {
 	hhClient := hhclient.NewClient(cfg.HH.Token)
 	vacancyRepo := pgrepo.NewVacancyRepo(pool)
 	resumeRepo := pgrepo.NewResumeRepo(pool)
-	resumeGenerator := mcpclient.NewResumeClient(cfg.MCP.PythonBin, cfg.MCP.ResumeServer)
+	resumeGenerator := mcpclient.NewResumeClient(cfg.MCP.PythonBin, cfg.MCP.ResumeServer, cfg.MCP.GroqAPIKey)
 	sheetsExporter := mcpclient.NewSheetsClient(cfg.MCP.PythonBin, cfg.MCP.SheetsServer, cfg.Google.CredentialsFile, cfg.Google.SheetID)
 
 	// ── Template ──────────────────────────────────────────────────────────────
