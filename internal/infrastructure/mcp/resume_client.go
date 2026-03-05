@@ -44,6 +44,9 @@ func (c *ResumeClient) GenerateRaw(ctx context.Context, data string) (string, er
 		return "", fmt.Errorf("call generate_resume: %w", err)
 	}
 
+	if len(result.Content) == 0 {
+		return "", fmt.Errorf("empty response from resume server")
+	}
 	content, ok := result.Content[0].(*mcp.TextContent)
 	if !ok {
 		return "", fmt.Errorf("unexpected content type from resume server")
@@ -71,6 +74,9 @@ func (c *ResumeClient) Generate(ctx context.Context, req domain.ResumeRequest) (
 		return domain.Resume{}, fmt.Errorf("call generate_resume: %w", err)
 	}
 
+	if len(result.Content) == 0 {
+		return domain.Resume{}, fmt.Errorf("empty response from resume server")
+	}
 	content, ok := result.Content[0].(*mcp.TextContent)
 	if !ok {
 		return domain.Resume{}, fmt.Errorf("unexpected content type from resume server")

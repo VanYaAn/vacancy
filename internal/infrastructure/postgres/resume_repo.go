@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"mcpPrep/internal/domain"
@@ -38,6 +40,9 @@ func (r *ResumeRepo) GetByVacancyID(ctx context.Context, vacancyID string) (*dom
 
 	var resume domain.Resume
 	if err := row.Scan(&resume.ID, &resume.VacancyID, &resume.Content, &resume.CreatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &resume, nil

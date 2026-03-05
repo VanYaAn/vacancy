@@ -21,14 +21,14 @@ func NewVacancyService(hh domain.VacancyProvider, repo domain.VacancyRepository)
 
 // SearchAndSave ищет вакансии на hh.ru, загружает детали каждой и сохраняет в БД.
 func (s *VacancyService) SearchAndSave(ctx context.Context, params domain.SearchParams, maxPages int) (int, error) {
-	vacancies, err := s.hh.SearchAll(params, maxPages)
+	vacancies, err := s.hh.SearchAll(ctx, params, maxPages)
 	if err != nil {
 		return 0, fmt.Errorf("search vacancies: %w", err)
 	}
 
 	saved := 0
 	for _, v := range vacancies {
-		detail, err := s.hh.GetVacancy(v.ID)
+		detail, err := s.hh.GetVacancy(ctx, v.ID)
 		if err != nil {
 			if errors.Is(err, hhinfra.ErrNotFound) {
 				log.Printf("vacancy %s not found, skipping", v.ID)

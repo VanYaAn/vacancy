@@ -57,6 +57,9 @@ func (c *SheetsClient) Export(ctx context.Context, vacancies []domain.VacancyDet
 		return "", fmt.Errorf("call export_to_sheets: %w", err)
 	}
 
+	if len(result.Content) == 0 {
+		return "", fmt.Errorf("empty response from sheets server")
+	}
 	content, ok := result.Content[0].(*mcp.TextContent)
 	if !ok {
 		return "", fmt.Errorf("unexpected content type from sheets server")

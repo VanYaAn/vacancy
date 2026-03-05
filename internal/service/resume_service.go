@@ -70,7 +70,10 @@ func (s *ResumeService) GenerateForAll(ctx context.Context) (int, error) {
 	for _, v := range vacancies {
 		// пропускаем если резюме уже есть
 		existing, err := s.resumeRepo.GetByVacancyID(ctx, v.ID)
-		if err == nil && existing != nil {
+		if err != nil {
+			return generated, fmt.Errorf("check existing resume for vacancy %s: %w", v.ID, err)
+		}
+		if existing != nil {
 			continue
 		}
 

@@ -4,9 +4,9 @@ import "context"
 
 // VacancyProvider — получение вакансий из hh.ru (реализуется через infrastructure/hh)
 type VacancyProvider interface {
-	SearchVacancies(params SearchParams) (*SearchResult, error)
-	GetVacancy(id string) (*VacancyDetail, error)
-	SearchAll(params SearchParams, maxPages int) ([]Vacancy, error)
+	SearchVacancies(ctx context.Context, params SearchParams) (*SearchResult, error)
+	GetVacancy(ctx context.Context, id string) (*VacancyDetail, error)
+	SearchAll(ctx context.Context, params SearchParams, maxPages int) ([]Vacancy, error)
 }
 
 // ResumeGenerator — генерация резюме под вакансию (реализуется через MCP resume_server.py)

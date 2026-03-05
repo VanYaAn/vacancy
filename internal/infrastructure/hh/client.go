@@ -1,12 +1,14 @@
 package hh
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"mcpPrep/internal/domain"
@@ -21,6 +23,7 @@ type Client struct {
 	http      *http.Client
 	token     string
 	rateLimit time.Duration
+	mu        sync.Mutex
 	lastReq   time.Time
 }
 
@@ -33,8 +36,8 @@ func NewClient(token string) *Client {
 }
 
 // SearchVacancies — поиск вакансий по параметрам, возвращает одну страницу.
-func (c *Client) SearchVacancies(params domain.SearchParams) (*domain.SearchResult, error) {
-	body, err := c.do("GET", "/vacancies", paramsToQuery(params))
+func (c *Client) SearchVacancies(ctx context.Context, params domain.SearchParams) (*domain.SearchResult, error) {
+	body, err := c.do(ctx, "GET", "/vacancies", paramsToQuery(params))
 	if err != nil {
 		return nil, fmt.Errorf("search vacancies: %w", err)
 	}
@@ -48,8 +51,8 @@ func (c *Client) SearchVacancies(params domain.SearchParams) (*domain.SearchResu
 }
 
 // GetVacancy — полные данные одной вакансии.
-func (c *Client) GetVacancy(id string) (*domain.VacancyDetail, error) {
-	body, err := c.do("GET", "/vacancies/"+id, nil)
+func (c *Client) GetVacancy(ctx context.Context, id string) (*domain.VacancyDetail, error) {
+	body, err := c.do(ctx, "GET", "/vacancies/"+id, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get vacancy %s: %w", id, err)
 	}
@@ -63,12 +66,12 @@ func (c *Client) GetVacancy(id string) (*domain.VacancyDetail, error) {
 }
 
 // SearchAll — постранично собирает все вакансии (до maxPages страниц).
-func (c *Client) SearchAll(params domain.SearchParams, maxPages int) ([]domain.Vacancy, error) {
+func (c *Client) SearchAll(ctx context.Context, params domain.SearchParams, maxPages int) ([]domain.Vacancy, error) {
 	var all []domain.Vacancy
 	params.Page = 0
 
 	for {
-		result, err := c.SearchVacancies(params)
+		result, err := c.SearchVacancies(ctx, params)
 		if err != nil {
 			return nil, err
 		}
@@ -84,18 +87,22 @@ func (c *Client) SearchAll(params domain.SearchParams, maxPages int) ([]domain.V
 
 // ─── internal ─────────────────────────────────────────────────────────────────
 
-func (c *Client) do(method, path string, query url.Values) ([]byte, error) {
-	if since := time.Since(c.lastReq); since < c.rateLimit {
-		time.Sleep(c.rateLimit - since)
-	}
+func (c *Client) do(ctx context.Context, method, path string, query url.Values) ([]byte, error) {
+	c.mu.Lock()
+	sleep := c.rateLimit - time.Since(c.lastReq)
 	c.lastReq = time.Now()
+	c.mu.Unlock()
+
+	if sleep > 0 {
+		time.Sleep(sleep)
+	}
 
 	u := baseURL + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
 	}
 
-	req, err := http.NewRequest(method, u, nil)
+	req, err := http.NewRequestWithContext(ctx, method, u, nil)
 	if err != nil {
 		return nil, fmt.Errorf("build request: %w", err)
 	}
